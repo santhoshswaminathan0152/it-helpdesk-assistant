@@ -1,46 +1,56 @@
-# AI-Powered IT Help Desk Assistant
+<p align="center">
+  <img src="assets/banner.png" alt="IT Help Desk AI Assistant" width="100%">
+</p>
 
-A chat assistant that answers IT service desk questions in real time using **Retrieval-Augmented Generation (RAG)**. Internal technical documentation is converted into a vector database, and the LLM is only allowed to answer from the retrieved documentation, so it gives specific answers instead of hallucinating. If nothing relevant is found, it declines and points the user to the Service Desk.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/LangChain-RAG-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" alt="LangChain">
+  <img src="https://img.shields.io/badge/FAISS-Vector%20DB-0467DF?style=for-the-badge&logo=meta&logoColor=white" alt="FAISS">
+  <img src="https://img.shields.io/badge/Ollama-Local%20LLM-000000?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama">
+  <img src="https://img.shields.io/badge/Streamlit-UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
+  <img src="https://img.shields.io/badge/tests-passing-22C55E?style=for-the-badge&logo=pytest&logoColor=white" alt="Tests">
+</p>
 
-**Tech stack:** Python · LangChain · Ollama (local LLM) · FAISS vector database · FastEmbed embeddings · Streamlit · Git/GitHub
+<p align="center">
+  <b>An automated IT support chatbot that answers service desk questions in real time,<br>grounded in internal technical documentation using Retrieval-Augmented Generation.</b>
+</p>
 
-## Architecture
+---
 
-```
-docs/*.md ──► ingest.py ──► split by heading + size ──► embeddings (bge-small) ──► FAISS index (vectorstore/)
-                                                                                        │
-user question (Streamlit chat, app.py) ──► rag.py ──► top-k similarity search ──────────┘
-                                                        │
-                                   relevance < threshold? ──yes──► "not in the knowledge base, raise a ticket"
-                                                        │ no
-                                   prompt (context only) ──► LLM (Ollama) ──► answer + source documents
-```
+## ✨ Highlights
 
-- **Grounded answers:** the prompt restricts the model to the retrieved context, and every answer lists its source documents.
-- **Hallucination guard:** chunks below `MIN_RELEVANCE` are discarded. Out-of-scope questions (e.g. "how many days annual leave do I get?") never reach the LLM.
-- **Runs locally:** no API keys and no data leaves the machine.
+| | |
+|---|---|
+| 🧠 **RAG pipeline** | Internal IT docs are chunked, embedded and stored in a **FAISS vector database**; every answer is built from the most relevant chunks. |
+| 🛡️ **No hallucinations** | A **relevance gate** drops low-scoring chunks. If nothing relevant is found, the LLM is never called and the user is pointed to the Service Desk. |
+| 📄 **Cited answers** | Every response lists the source documents it came from, so users can trust the answer. |
+| 🔒 **Runs 100% locally** | Local LLM via **Ollama** and local embeddings via **FastEmbed**: no API keys, no data leaves the machine. |
+| 💬 **Live chat UI** | Clean **Streamlit** interface with chat history and one-click index rebuild. |
 
-## Project structure
+## 🎬 Demo
 
-| File | Purpose |
-|------|---------|
-| `docs/` | Sample internal IT knowledge base (password reset, VPN, email, printers, Wi-Fi, software/hardware) |
-| `ingest.py` | Data pipeline: loads markdown docs, chunks them and builds the FAISS vector index |
-| `rag.py` | Retrieval + LangChain prompt/LLM chain; also usable from the command line |
-| `app.py` | Streamlit chat interface |
-| `config.py` | Environment-based settings (`.env`) |
-| `tests/` | Pytest tests for chunking, retrieval and the out-of-scope fallback |
+<p align="center">
+  <img src="assets/chat_demo.png" alt="Chat demo" width="85%">
+</p>
 
-## Getting started
+> The first two questions are answered from the knowledge base with sources. The third (*annual leave*) is outside the IT docs, so the assistant **declines instead of guessing**.
+
+## 🏗️ Architecture
+
+<p align="center">
+  <img src="assets/architecture.png" alt="Architecture" width="100%">
+</p>
+
+## 🚀 Quick start
 
 ```bash
-# 1. Install and start Ollama (https://ollama.com/download), then pull a model
-ollama pull qwen2.5:0.5b        # small and fast; use llama3.2:3b or qwen2.5:7b for better answers
+# 1. Install Ollama (https://ollama.com/download) and pull a model
+ollama pull qwen2.5:0.5b          # small & fast; llama3.2:3b or qwen2.5:7b give richer answers
 
 # 2. Install dependencies
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # optional: change model, threshold, etc.
+cp .env.example .env              # optional: change model, threshold, etc.
 
 # 3. Build the vector database from docs/
 python ingest.py
@@ -49,23 +59,27 @@ python ingest.py
 streamlit run app.py
 ```
 
-Ask from the command line:
+Ask from the command line, or run the tests:
 
 ```bash
 python rag.py "VPN says authentication failed"
-```
-
-Run the tests:
-
-```bash
 pytest -q
 ```
 
-## Using your own documentation
+## 📁 Project structure
 
-Drop markdown files into `docs/` and run `python ingest.py` again, or click **Rebuild index** in the app sidebar. Headings (`#`, `##`) become chunk boundaries, so well-structured docs retrieve best.
+```
+it-helpdesk-assistant/
+├── docs/            # Internal IT knowledge base (markdown)
+├── ingest.py        # Data pipeline: load → chunk → embed → FAISS index
+├── rag.py           # Retriever + relevance gate + LangChain prompt/LLM chain
+├── app.py           # Streamlit chat interface
+├── config.py        # Settings from .env
+├── tests/           # Pytest: chunking, retrieval, out-of-scope fallback
+└── assets/          # README images
+```
 
-## Configuration
+## ⚙️ Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -75,12 +89,19 @@ Drop markdown files into `docs/` and run `python ingest.py` again, or click **Re
 | `TOP_K` | `4` | Chunks retrieved per question |
 | `MIN_RELEVANCE` | `0.5` | Minimum relevance score (0–1) for a chunk to be used |
 
-## Example
+The `0.5` threshold was chosen from measured scores: in-scope questions scored **0.69–0.75**, while off-topic ones scored **0.18–0.46**.
 
-> **Q:** How do I reset my password?
-> **A:** 1. Go to the self-service portal at https://passwordreset.company.local. 2. Enter your corporate email address and complete the MFA challenge… *(Sources: password_reset.md)*
+## 📚 Using your own documentation
 
-> **Q:** How many days annual leave do I get?
-> **A:** I couldn't find this in the IT knowledge base, so I won't guess. Please raise a ticket in the IT portal or call the Service Desk on extension 4357.
+Drop markdown files into `docs/` and run `python ingest.py` again, or click **Rebuild index** in the app sidebar. Headings (`#`, `##`) become chunk boundaries, so well-structured docs retrieve best.
 
-> Note: the documents in `docs/` are sample content written for this demo; the URLs and extensions are placeholders.
+## 🗺️ Roadmap
+
+- [ ] Ingest PDFs, Confluence and SharePoint pages
+- [ ] Ticket creation (e.g. Jira / ServiceNow) when the bot can't answer
+- [ ] Conversation memory for follow-up questions
+- [ ] Docker image for one-command deployment
+
+---
+
+<sub>The documents in <code>docs/</code> are sample content written for this demo; URLs and phone extensions are placeholders.</sub>
